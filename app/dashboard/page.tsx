@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { InfoIcon, Loader } from "lucide-react";
 import Dashboard from "@/components/dashboard/client-dashboard";
 import { Suspense } from "react";
+import consultationService from "@/lib/supabase/consultations/service";
 
 async function fetchUserDetails() {
   const supabase = await createClient();
@@ -29,5 +30,7 @@ export default async function DashboardPage() {
 
 const DashboardContent = async () => {
   const userDetails = await fetchUserDetails();
+  const allConsultations = await consultationService.fetchAll();
+  console.log({ allConsultations });
   return <Dashboard user={userDetails} />;
 };

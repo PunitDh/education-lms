@@ -41,7 +41,7 @@ export default function Dashboard({ user }: DashboardProps) {
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  console.log({ user:(user) });
+  console.log({ user: user });
 
   useEffect(() => {
     try {
