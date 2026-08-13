@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -5,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function Page() {
   return (
@@ -25,6 +27,9 @@ export default function Page() {
               </p>
             </CardContent>
           </Card>
+          <Button asChild>
+            <Link href="/dashboard">Continue</Link>
+          </Button>
         </div>
       </div>
     </div>
