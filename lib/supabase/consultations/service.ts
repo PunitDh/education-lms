@@ -58,8 +58,6 @@ const consultationService = {
     status: ConsultationStatus,
   ): Promise<Consultation> {
     const existing = await consultationRepository.findByIdForUser(userId, id);
-    if (!existing)
-      throw new Error(`Consultation '${id}' does not exist for user.`);
 
     if (allowedStatusTransitions[existing.status].includes(status))
       return await consultationRepository.changeStatus(userId, id, status);
