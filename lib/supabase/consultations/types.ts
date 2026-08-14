@@ -16,16 +16,4 @@ export enum ConsultationStatus {
   CANCELLED = "cancelled",
 }
 
-export type CreateConsultationDto = Pick<
-  Consultation,
-  "firstName" | "lastName" | "reason" | "consultationAt"
->;
-
-export type EditConsultationDto = Pick<
-  Consultation,
-  "firstName" | "lastName" | "reason" | "consultationAt"
->;
-
-export type ChangeStatusDto = Pick<Consultation, "status">;
-
 export type SearchConsultationUserId = Pick<Consultation, "userId">;

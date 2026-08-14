@@ -4,11 +4,10 @@ import consultationRepository from "./repository";
 import {
   Consultation,
   ConsultationStatus,
-  CreateConsultationDto,
-  EditConsultationDto,
 } from "./types";
 import { CurrentUser } from "@/lib/auth/types";
 import { isAdmin } from "@/lib/auth/mapper";
+import { CreateConsultationDto, EditConsultationDto } from "./contracts";
 
 const allowedStatusTransitions: Readonly<
   Record<ConsultationStatus, ConsultationStatus[]>
@@ -48,6 +47,10 @@ const consultationService = {
     id: string,
     consultation: EditConsultationDto,
   ): Promise<Consultation> {
+    const existing = await consultationRepository.findByIdForUser(userId, id);
+    if (!existing)
+      throw new Error(`Consultation '${id}' does not exist for user.`);
+
     return await consultationRepository.update(userId, id, consultation);
   },
 
@@ -56,13 +59,15 @@ const consultationService = {
     id: string,
     status: ConsultationStatus,
   ): Promise<Consultation> {
-    const consultation = await consultationRepository.findById(id);
+    const existing = await consultationRepository.findByIdForUser(userId, id);
+    if (!existing)
+      throw new Error(`Consultation '${id}' does not exist for user.`);
 
-    if (allowedStatusTransitions[consultation.status].includes(status))
+    if (allowedStatusTransitions[existing.status].includes(status))
       return await consultationRepository.changeStatus(userId, id, status);
 
     throw new Error(
-      `Cannot change consultation from ${consultation.status} to ${status}`,
+      `Cannot change consultation from ${existing.status} to ${status}`,
     );
   },
 };

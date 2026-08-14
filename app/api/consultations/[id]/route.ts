@@ -1,5 +1,4 @@
 import consultationService from "@/lib/supabase/consultations/service";
-import { EditConsultationDto } from "@/lib/supabase/consultations/types";
 import { HttpContext } from "../../types";
 import {
   forbiddenReponse,
@@ -7,6 +6,7 @@ import {
   unauthorisedReponse,
 } from "@/lib/auth/authenticate";
 import { isAdmin } from "@/lib/auth/mapper";
+import { EditConsultationDto } from "@/lib/supabase/consultations/contracts";
 
 export async function PATCH(request: Request, { params }: HttpContext) {
   const user = await getAuthenticatedUser();

@@ -8,8 +8,6 @@ import ConfirmDialog from "@/components/ui/confirm-dialog";
 import {
   Consultation,
   ConsultationStatus,
-  CreateConsultationDto,
-  EditConsultationDto,
 } from "@/lib/supabase/consultations/types";
 import useConsultationApi from "@/lib/api/consultationApi";
 import { normalizeDateTime, formatDateTimeForPicker } from "@/lib/utils";
@@ -18,6 +16,10 @@ import CardForm from "./CardForm";
 import { ConsultationForm } from "./types";
 import { CurrentUser } from "@/lib/auth/types";
 import { isAdmin } from "@/lib/auth/mapper";
+import {
+  CreateConsultationDto,
+  EditConsultationDto,
+} from "@/lib/supabase/consultations/contracts";
 
 type DashboardProps = {
   consultations: Consultation[];

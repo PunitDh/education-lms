@@ -64,11 +64,12 @@ const consultationRepository = {
     return data.map(mapConsultation);
   },
 
-  findById: async function (id: string): Promise<Consultation> {
+  findByIdForUser: async function (userId: string, id: string): Promise<Consultation> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .select("*")
+      .eq("user_id", userId)
       .eq("id", id)
       .single();
 

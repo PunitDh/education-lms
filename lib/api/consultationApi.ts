@@ -1,8 +1,7 @@
+import { CreateConsultationDto, EditConsultationDto } from "../supabase/consultations/contracts";
 import {
   Consultation,
   ConsultationStatus,
-  CreateConsultationDto,
-  EditConsultationDto,
 } from "../supabase/consultations/types";
 
 type HttpMethod = "GET" | "POST" | "PATCH";
