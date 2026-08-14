@@ -36,13 +36,16 @@ function useConsultationApi() {
       });
     },
 
-    update: async function (id: string, consultation: EditConsultationDto) {
+    update: async function (
+      id: string,
+      consultation: EditConsultationDto,
+    ): Promise<Consultation> {
       return request(`/api/consultations/${id}`, "PATCH", {
         body: JSON.stringify(consultation),
       });
     },
 
-    cancel: async function (id: string, consultation: EditConsultationDto) {
+    cancel: async function (id: string, consultation: EditConsultationDto): Promise<Consultation> {
       return request(`/api/consultations/${id}/cancel`, "PATCH");
     },
   };

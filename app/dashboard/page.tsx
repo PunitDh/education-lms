@@ -1,17 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
 import Dashboard from "@/components/dashboard/client-dashboard";
 import { Suspense } from "react";
 import consultationService from "@/lib/supabase/consultations/service";
-
-async function fetchUserDetails() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-
-  if (error || !data?.claims) redirect("/auth/login");
-  return data.claims;
-}
+import { getAuthenticatedUser } from "@/lib/auth/authenticate";
 
 export default async function DashboardPage() {
   return (
@@ -27,7 +19,10 @@ export default async function DashboardPage() {
 }
 
 const DashboardContent = async () => {
-  const userDetails = await fetchUserDetails();
-  const consultations = await consultationService.fetchForUser(userDetails);
+  const user = await getAuthenticatedUser();
+  if (!user) return redirect("/auth/login");
+
+  const consultations = await consultationService.fetchForUser(user);
+
   return <Dashboard consultations={consultations} />;
 };

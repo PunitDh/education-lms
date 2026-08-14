@@ -21,3 +21,25 @@ export function getUserDisplayName(user: JwtPayload | undefined): string {
 
   return fullName || user.email || "";
 }
+
+export function formatDateTime(datetime: Date): string {
+  return datetime.toISOString();
+}
+
+export function formatDateTimeDisplay(datetime: string): string {
+  return new Intl.DateTimeFormat("en-AU", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Australia/Melbourne",
+  }).format(new Date(datetime));
+}
+
+export function formatDateTimeForPicker(value: string) {
+  const date = new Date(value);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate(),
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

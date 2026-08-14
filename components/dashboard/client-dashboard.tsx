@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { PlusCircle, Edit2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,13 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
-import { JwtPayload } from "@supabase/supabase-js";
 import {
   Consultation,
   CreateConsultationDto,
+  EditConsultationDto,
 } from "@/lib/supabase/consultations/types";
 import useConsultationApi from "@/lib/api/consultationApi";
+import { formatDateTimeDisplay, formatDateTimeForPicker } from "@/lib/utils";
 
 type DashboardProps = {
   consultations: Consultation[];
@@ -58,19 +59,30 @@ export default function Dashboard({
     if (!firstName || !lastName || !reason || !datetime) return;
 
     if (editingId) {
-      setConsultations((s) =>
-        s.map((c) => (c.id === editingId ? { ...c, ...form } : c)),
-      );
-    } else {
-      const newC: CreateConsultationDto = {
+      const editingConsultation: EditConsultationDto = {
         firstName,
         lastName,
         reason,
         consultationAt: datetime,
       };
 
-      const consultation = await consultationApi.create(newC);
+      const consultation = await consultationApi.update(
+        editingId,
+        editingConsultation,
+      );
 
+      setConsultations((s) =>
+        s.map((c) => (c.id === editingId ? { ...c, ...consultation } : c)),
+      );
+    } else {
+      const newConsultation: CreateConsultationDto = {
+        firstName,
+        lastName,
+        reason,
+        consultationAt: datetime,
+      };
+
+      const consultation = await consultationApi.create(newConsultation);
       setConsultations((s) => [consultation, ...s]);
     }
 
@@ -79,12 +91,11 @@ export default function Dashboard({
   }
 
   function handleEdit(c: Consultation) {
-    console.log("editing consultation", c);
     setForm({
       firstName: c.firstName ?? "",
       lastName: c.lastName ?? "",
       reason: c.reason ?? "",
-      datetime: c.consultationAt ?? "",
+      datetime: formatDateTimeForPicker(c.consultationAt ?? ""),
     });
     setEditingId(c.id);
     setOpenForm(true);
@@ -122,8 +133,9 @@ export default function Dashboard({
 
       <div
         id="consultation-form-panel"
-        className={`grid transition-all duration-300 ease-out ${openForm ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-          }`}
+        className={`grid transition-all duration-300 ease-out ${
+          openForm ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
       >
         <div className="overflow-hidden">
           <Card className="w-full md:w-2/3">
@@ -174,6 +186,7 @@ export default function Dashboard({
                 <Input
                   type="datetime-local"
                   className="md:col-span-2"
+                  step={1800}
                   value={form.datetime}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, datetime: e.target.value }))
@@ -217,7 +230,7 @@ export default function Dashboard({
               </div>
               <div className="text-sm text-muted-foreground">{c.reason}</div>
               <div className="text-xs text-muted-foreground mt-1">
-                {new Date(c.consultationAt).toLocaleString()}
+                {formatDateTimeDisplay(c.consultationAt)}
               </div>
             </div>
             <div className="flex items-center gap-2">
