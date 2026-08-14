@@ -1,4 +1,3 @@
-import { JwtPayload } from "@supabase/supabase-js";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { CurrentUser } from "./auth/types";
@@ -18,7 +17,7 @@ export function getUserDisplayName(user: CurrentUser | undefined): string {
   return fullName || user.email || "";
 }
 
-export function formatDateTime(datetime: Date): string {
+export function normalizeDateTime(datetime: Date): string {
   return datetime.toISOString();
 }
 

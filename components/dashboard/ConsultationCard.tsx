@@ -113,7 +113,7 @@ const ConsultationCard = ({
               size="sm"
               title="Mark as scheduled"
             >
-              <Clock size={16} /> Mark Scheduled
+              <Clock size={16} /> Mark Incomplete
             </Button>
           )}
         </div>

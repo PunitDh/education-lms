@@ -64,9 +64,9 @@ async function seed() {
       consultation_at: "2026-08-25T11:00:00+10:00",
     },
     {
-      user_id: admin.id,
+      user_id: student.id,
       first_name: "Test",
-      last_name: "Admin",
+      last_name: "Student",
       reason: "Review consultation scheduling workflow",
       consultation_at: "2026-08-20T09:30:00+10:00",
     },

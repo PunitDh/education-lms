@@ -25,10 +25,6 @@ async function request<T>(
 
 function useConsultationApi() {
   return {
-    all: async function (): Promise<Consultation[]> {
-      return await request<Consultation[]>("/api/consultations", "GET");
-    },
-
     create: async function (
       consultation: CreateConsultationDto,
     ): Promise<Consultation> {

@@ -1,109 +1,398 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Contour Education LMS
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+A lightweight consultation management system built with Next.js, TypeScript, Supabase and PostgreSQL.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+The application allows students to book and manage consultations, while administrators have a read-only view of consultations across the system.
+
+## Tech Stack
+
+- Next.js
+- React
+- TypeScript
+- Supabase Auth
+- Supabase SSR
+- PostgreSQL
+- Tailwind CSS
+- shadcn/ui
 
 ## Features
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+### Students
 
-## Demo
+Students can:
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+- Sign up, log in and log out
+- View their own consultations
+- Book a consultation
+- Reschedule a scheduled consultation
+- Cancel a consultation
+- Mark a consultation as complete
+- Mark a completed consultation as incomplete
 
-## Deploy to Vercel
+### Administrators
 
-Vercel deployment will guide you through creating a Supabase account and project.
+Administrators can:
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+- Log in
+- View consultations across the entire system
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+Administrator accounts are intentionally read-only and cannot create, edit, cancel or change the status of consultations.
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+## Consultation Lifecycle
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+Consultations use the following statuses:
 
-## Clone and run locally
+- `scheduled`
+- `completed`
+- `cancelled`
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+The supported transitions are:
 
-2. Create a Next.js app using the Supabase Starter template npx command
+```text
+scheduled -> completed
+scheduled -> cancelled
+completed -> scheduled
+cancelled -> no further transitions
+```
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+A completed consultation may be marked incomplete, which moves it back to `scheduled`.
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+Cancelled consultations are considered final. A student who wishes to book again must create a new consultation.
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+Completed consultations are treated as historical records and cannot be edited unless first marked incomplete.
 
-3. Use `cd` to change into the app's directory
+## Architecture
 
-   ```bash
-   cd with-supabase-app
-   ```
+The application separates UI, HTTP, business logic and persistence concerns.
 
-4. Rename `.env.example` to `.env.local` and update the following:
+Client-side mutations follow:
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+```text
+React Client Component
+    ↓
+Consultation API Client
+    ↓
+Next.js Route Handler
+    ↓
+Consultation Service
+    ↓
+Consultation Repository
+    ↓
+Supabase / PostgreSQL
+```
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+Initial dashboard data is loaded server-side:
 
-5. You can now run the Next.js local development server:
+```text
+Next.js Server Component
+    ↓
+Consultation Service
+    ↓
+Consultation Repository
+    ↓
+Supabase / PostgreSQL
+```
 
-   ```bash
-   npm run dev
-   ```
+This avoids unnecessary HTTP requests during server rendering while still exposing API endpoints for client-side mutations.
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+## Authentication and Authorisation
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+Authentication is provided by Supabase Auth.
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+Supabase's built-in `authenticated` database role identifies users who are signed in, while application-specific roles distinguish students from administrators.
 
-## Feedback and issues
+Application roles are stored in Supabase Auth `app_metadata`.
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+Supported roles are:
 
-## More Supabase examples
+```text
+student
+admin
+```
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+Users without an explicit administrator role are treated as students.
+
+`app_metadata` is used for authorisation rather than user-editable metadata.
+
+The authenticated user's ID is always derived on the server from the verified Supabase JWT. The client cannot choose the `user_id` associated with a consultation.
+
+First and last names are stored in Auth user metadata and are also copied onto consultation records as a snapshot of the booking information.
+
+## Database
+
+The primary application table is:
+
+```text
+public.consultations
+```
+
+Each consultation contains:
+
+- UUID primary key
+- Auth user UUID
+- First name
+- Last name
+- Reason
+- Consultation datetime
+- Status
+- Created timestamp
+- Updated timestamp
+
+Consultation status is represented by a PostgreSQL enum rather than unrestricted text.
+
+Database schema changes are managed entirely through migrations in:
+
+```text
+supabase/migrations/
+```
+
+An `updated_at` database trigger automatically updates the modification timestamp when a consultation changes.
+
+## Prerequisites
+
+The following are required to run the application locally:
+
+- Node.js and npm
+- Docker
+- Git
+
+Docker must be running before starting the local Supabase environment.
+
+## Local Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/PunitDh/education-lms.git
+cd education-lms
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the local Supabase stack:
+
+```bash
+npx supabase start
+```
+
+The project uses custom local Supabase ports configured in `supabase/config.toml`.
+
+The main local services are:
+
+```text
+Supabase API:    http://127.0.0.1:55321
+PostgreSQL:      port 55322
+Supabase Studio: http://127.0.0.1:55323
+Mailpit:         http://127.0.0.1:55324
+```
+
+Once Supabase has started, run:
+
+```bash
+npx supabase status
+```
+
+This displays the local API URL and API keys.
+
+Copy the environment template:
+
+```bash
+cp .env.example .env.local
+```
+
+Then populate `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your local publishable key>
+SUPABASE_SECRET_KEY=<your local secret key>
+```
+
+### Environment Variables
+
+`NEXT_PUBLIC_SUPABASE_URL`
+
+The Supabase API URL used by the browser and server Supabase clients.
+
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+The publishable Supabase API key. This key is intentionally available to browser code.
+
+`SUPABASE_SECRET_KEY`
+
+A privileged server-side Supabase key used by the development seed scripts to create authentication users and seed application data.
+
+This key must never be exposed through a `NEXT_PUBLIC_` environment variable or committed to source control.
+
+## Create the Database
+
+Reset the local database:
+
+```bash
+npx supabase db reset
+```
+
+This recreates the database and applies every migration in `supabase/migrations`.
+
+The project intentionally does not use Supabase's built-in SQL seed file because login-capable Supabase Auth users need to be created through the Auth Admin API.
+
+## Seed Development Data
+
+Run:
+
+```bash
+npm run db:seed
+```
+
+This:
+
+1. Creates or updates the development student and administrator accounts
+2. Creates sample consultations associated with the seeded student account
+
+The seed scripts are safe to run repeatedly.
+
+### Seed Accounts
+
+Student:
+
+```text
+Email:    student@example.com
+Password: Student123!
+```
+
+Administrator:
+
+```text
+Email:    admin@example.com
+Password: Admin123!
+```
+
+The administrator user receives:
+
+```text
+app_metadata.role = "admin"
+```
+
+The student has no privileged application role and is therefore treated as a normal student.
+
+## Run the Application
+
+Start the Next.js development server:
+
+```bash
+npm run dev
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+## Fresh Local Reset
+
+To recreate the application from a completely clean database:
+
+```bash
+npx supabase db reset
+npm run db:seed
+npm run dev
+```
+
+This is useful for verifying that the database can be reconstructed entirely from committed migrations and seed scripts.
+
+## Development Commands
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Run ESLint:
+
+```bash
+npm run lint
+```
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+Reset the local database:
+
+```bash
+npx supabase db reset
+```
+
+Seed development users and consultations:
+
+```bash
+npm run db:seed
+```
+
+## Design Decisions and Assumptions
+
+### API-first mutations
+
+Consultation mutations use Next.js Route Handlers rather than Server Actions.
+
+This provides an explicit HTTP API boundary and keeps request handling separate from business and persistence logic.
+
+### Server-side user ownership
+
+Consultation ownership is never supplied by the browser.
+
+The authenticated user's UUID is resolved from Supabase Auth on the server and supplied to the consultation service and repository.
+
+### Read-only administrators
+
+The assessment requires administrators to be able to see all consultations but does not require administrators to manage them.
+
+Administrator functionality is therefore intentionally read-only.
+
+### Application roles
+
+The application distinguishes between Supabase authentication roles and application roles.
+
+Supabase's `authenticated` role represents authentication state, while `app_metadata.role` represents application-level authorisation.
+
+### No separate profile table
+
+A separate profile table was not introduced because the application currently requires only basic identity information.
+
+First and last names are stored in Supabase Auth user metadata and consultation records reference the authenticated user through `auth.users.id`.
+
+A profile table could be introduced later if user-specific application data becomes more substantial.
+
+### Cancellation
+
+Cancelling a consultation changes its status rather than deleting it.
+
+This preserves historical data and prevents cancellation from destroying an application record.
+
+### Datetimes
+
+Consultation datetimes are converted to ISO timestamps before being sent to the API and are stored by PostgreSQL using `timestamptz`.
+
+### Type safety
+
+Application-facing consultation and authentication models are represented using TypeScript types rather than exposing raw Supabase JWT or database row structures throughout the application.
+
+## Future Considerations
+
+For a larger production system, potential additions could include:
+
+- Pagination for large consultation datasets
+- Audit history
+- Automated reminders
+- More granular administrator permissions
+- Additional consultation workflow states
+
+These were intentionally left outside the scope of this assessment.

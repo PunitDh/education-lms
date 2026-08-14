@@ -12,7 +12,7 @@ import {
   EditConsultationDto,
 } from "@/lib/supabase/consultations/types";
 import useConsultationApi from "@/lib/api/consultationApi";
-import { formatDateTimeForPicker } from "@/lib/utils";
+import { normalizeDateTime, formatDateTimeForPicker } from "@/lib/utils";
 import ConsultationCard from "./ConsultationCard";
 import CardForm from "./CardForm";
 import { ConsultationForm } from "./types";
@@ -58,7 +58,7 @@ export default function Dashboard({
         firstName,
         lastName,
         reason,
-        consultationAt: datetime,
+        consultationAt: normalizeDateTime(new Date(datetime)),
       };
 
       try {
@@ -78,7 +78,7 @@ export default function Dashboard({
         firstName,
         lastName,
         reason,
-        consultationAt: datetime,
+        consultationAt: normalizeDateTime(new Date(datetime)),
       };
 
       try {

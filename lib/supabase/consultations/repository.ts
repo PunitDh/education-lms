@@ -7,8 +7,11 @@ import {
   EditConsultationDto,
   SearchConsultationUserId,
 } from "./types";
+import { Database } from "../database.types";
 
-function mapConsultation(row: any): Consultation {
+function mapConsultation(
+  row: Database["public"]["Tables"]["consultations"]["Row"],
+): Consultation {
   return {
     id: row.id,
     userId: row.user_id,

@@ -10,7 +10,17 @@ import { Input } from "../ui/input";
 import { X } from "lucide-react";
 import { ConsultationForm } from "./types";
 import { ChangeEventHandler } from "react";
-import { JwtPayload } from "@supabase/supabase-js";
+
+const getMinDateTime = () => {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const remainder = minutes % 30;
+
+  if (remainder !== 0) now.setMinutes(minutes + (30 - remainder));
+
+  now.setSeconds(0, 0);
+  return now.toISOString().slice(0, 16);
+};
 
 type Props = {
   open: boolean;
@@ -76,7 +86,8 @@ const CardForm = ({
               name="datetime"
               type="datetime-local"
               className="md:col-span-2"
-              step={1800}
+              step="1800"
+              min={getMinDateTime()}
               value={form.datetime}
               onChange={onFormChange}
             />

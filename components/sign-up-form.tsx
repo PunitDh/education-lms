@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SignUpWithPasswordCredentials } from "@supabase/supabase-js";
 
 export function SignUpForm({
   className,

@@ -5,6 +5,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "db:seed:users": "tsx scripts/seed-users.ts",
+    "db:seed:consultations": "tsx scripts/seed-consultations.ts",
     "db:seed": "tsx scripts/seed-users.ts && tsx scripts/seed-consultations.ts"
   },
   "dependencies": {
