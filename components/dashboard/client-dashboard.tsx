@@ -13,59 +13,46 @@ import {
 } from "@/components/ui/card";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { JwtPayload } from "@supabase/supabase-js";
+import {
+  Consultation,
+  CreateConsultationDto,
+} from "@/lib/supabase/consultations/types";
+import useConsultationApi from "@/lib/api/consultationApi";
 
 type DashboardProps = {
-  user: JwtPayload;
+  consultations: Consultation[];
 };
 
-type Consultation = {
-  id: string;
+type ConsultationForm = {
   firstName: string;
   lastName: string;
   reason: string;
   datetime: string;
-  userId: string;
 };
 
-const STORAGE_KEY = "consultations:v1";
-
-export default function Dashboard({ user }: DashboardProps) {
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+export default function Dashboard({
+  consultations: _consultations = [],
+}: DashboardProps) {
+  const [consultations, setConsultations] =
+    useState<Consultation[]>(_consultations);
   const [openForm, setOpenForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
+
+  const [form, setForm] = useState<ConsultationForm>({
     firstName: "",
     lastName: "",
     reason: "",
     datetime: "",
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  console.log({ user: user });
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setConsultations(JSON.parse(raw));
-    } catch (e) {
-      console.warn("failed to load consultations", e);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(consultations));
-    } catch (e) {
-      console.warn("failed to save consultations", e);
-    }
-  }, [consultations]);
+  const consultationApi = useConsultationApi();
 
   function resetForm() {
     setForm({ firstName: "", lastName: "", reason: "", datetime: "" });
     setEditingId(null);
   }
 
-  function handleSubmit(e?: React.FormEvent) {
+  async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const { firstName, lastName, reason, datetime } = form;
     if (!firstName || !lastName || !reason || !datetime) return;
@@ -75,15 +62,16 @@ export default function Dashboard({ user }: DashboardProps) {
         s.map((c) => (c.id === editingId ? { ...c, ...form } : c)),
       );
     } else {
-      const newC: Consultation = {
-        id: String(Date.now()),
+      const newC: CreateConsultationDto = {
         firstName,
         lastName,
         reason,
-        datetime,
-        userId: user.sub,
+        consultationAt: datetime,
       };
-      setConsultations((s) => [newC, ...s]);
+
+      const consultation = await consultationApi.create(newC);
+
+      setConsultations((s) => [consultation, ...s]);
     }
 
     resetForm();
@@ -91,11 +79,12 @@ export default function Dashboard({ user }: DashboardProps) {
   }
 
   function handleEdit(c: Consultation) {
+    console.log("editing consultation", c);
     setForm({
-      firstName: c.firstName,
-      lastName: c.lastName,
-      reason: c.reason,
-      datetime: c.datetime,
+      firstName: c.firstName ?? "",
+      lastName: c.lastName ?? "",
+      reason: c.reason ?? "",
+      datetime: c.consultationAt ?? "",
     });
     setEditingId(c.id);
     setOpenForm(true);
@@ -133,9 +122,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
       <div
         id="consultation-form-panel"
-        className={`grid transition-all duration-300 ease-out ${
-          openForm ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
+        className={`grid transition-all duration-300 ease-out ${openForm ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          }`}
       >
         <div className="overflow-hidden">
           <Card className="w-full md:w-2/3">
@@ -212,7 +200,7 @@ export default function Dashboard({ user }: DashboardProps) {
       </div>
 
       <div className="grid gap-3">
-        {consultations.length === 0 && (
+        {(!consultations || consultations.length === 0) && (
           <div className="p-4 rounded-md border text-sm text-muted-foreground">
             No consultations booked yet.
           </div>
@@ -229,7 +217,7 @@ export default function Dashboard({ user }: DashboardProps) {
               </div>
               <div className="text-sm text-muted-foreground">{c.reason}</div>
               <div className="text-xs text-muted-foreground mt-1">
-                {new Date(c.datetime).toLocaleString()}
+                {new Date(c.consultationAt).toLocaleString()}
               </div>
             </div>
             <div className="flex items-center gap-2">

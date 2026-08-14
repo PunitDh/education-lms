@@ -9,11 +9,14 @@ export type Consultation = {
   userId: string;
 };
 
-export type CreateConsultation = {
-  firstName: string;
-  lastName: string;
-  reason: string;
-  consultationAt: string;
-};
+export type CreateConsultationDto = Pick<
+  Consultation,
+  "firstName" | "lastName" | "reason" | "consultationAt"
+>;
+
+export type EditConsultationDto = Pick<
+  Consultation,
+  "firstName" | "lastName" | "reason" | "consultationAt"
+>;
 
 export type SearchConsultationUserId = Pick<Consultation, "userId">;

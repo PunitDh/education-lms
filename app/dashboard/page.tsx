@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { InfoIcon, Loader } from "lucide-react";
 import Dashboard from "@/components/dashboard/client-dashboard";
 import { Suspense } from "react";
 import consultationService from "@/lib/supabase/consultations/service";
@@ -11,7 +10,6 @@ async function fetchUserDetails() {
   const { data, error } = await supabase.auth.getClaims();
 
   if (error || !data?.claims) redirect("/auth/login");
-
   return data.claims;
 }
 
@@ -30,9 +28,6 @@ export default async function DashboardPage() {
 
 const DashboardContent = async () => {
   const userDetails = await fetchUserDetails();
-  const isAdmin = userDetails.app_metadata?.role === "admin";
-  const consultations = isAdmin ? await consultationService.fetchAll() : await consultationService.fetchByUserId(userDetails.sub);
-
-  console.log({ consultations });
-  return <Dashboard user={userDetails} />;
+  const consultations = await consultationService.fetchForUser(userDetails);
+  return <Dashboard consultations={consultations} />;
 };
