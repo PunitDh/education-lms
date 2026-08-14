@@ -1,3 +1,5 @@
-REVOKE DELETE ON TABLE public.consultations from authenticated;
- 
-ALTER TABLE public.consultations ENABLE row level security;
+REVOKE ALL PRIVILEGES ON TABLE public.consultations
+FROM anon, authenticated;
+
+ALTER TABLE public.consultations
+ENABLE ROW LEVEL SECURITY;

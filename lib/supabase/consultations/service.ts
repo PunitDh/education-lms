@@ -1,10 +1,7 @@
 import "server-only";
 
 import consultationRepository from "./repository";
-import {
-  Consultation,
-  ConsultationStatus,
-} from "./types";
+import { Consultation, ConsultationStatus } from "./types";
 import { CurrentUser } from "@/lib/auth/types";
 import { isAdmin } from "@/lib/auth/mapper";
 import { CreateConsultationDto, EditConsultationDto } from "./contracts";
@@ -48,8 +45,9 @@ const consultationService = {
     consultation: EditConsultationDto,
   ): Promise<Consultation> {
     const existing = await consultationRepository.findByIdForUser(userId, id);
-    if (!existing)
-      throw new Error(`Consultation '${id}' does not exist for user.`);
+
+    if (existing.status !== ConsultationStatus.SCHEDULED)
+      throw new Error(`Cannot edit a ${existing.status} consultation`);
 
     return await consultationRepository.update(userId, id, consultation);
   },

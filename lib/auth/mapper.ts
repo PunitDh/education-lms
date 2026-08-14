@@ -1,7 +1,7 @@
 import { JwtPayload } from "@supabase/supabase-js";
 import { CurrentUser } from "./types";
 
-export function mapJWTToCurrentUser(jwt: JwtPayload): CurrentUser {
+export function mapJwtToUser(jwt: JwtPayload): CurrentUser {
   return {
     id: jwt.sub,
     email: jwt.email ?? "",

@@ -1,21 +1,31 @@
 import consultationService from "@/lib/supabase/consultations/service";
 import { HttpContext } from "../../types";
 import {
-  forbiddenReponse,
+  badResponse,
+  forbiddenResponse,
   getAuthenticatedUser,
-  unauthorisedReponse,
+  unauthorisedResponse,
 } from "@/lib/auth/authenticate";
 import { isAdmin } from "@/lib/auth/mapper";
-import { EditConsultationDto } from "@/lib/supabase/consultations/contracts";
+import { editConsultationSchema } from "@/lib/supabase/consultations/contracts";
 
 export async function PATCH(request: Request, { params }: HttpContext) {
   const user = await getAuthenticatedUser();
-  if (!user) return unauthorisedReponse();
-  if (isAdmin(user)) return forbiddenReponse();
+  if (!user) return unauthorisedResponse();
+  if (isAdmin(user)) return forbiddenResponse();
 
   const { id } = await params;
-  const dto: EditConsultationDto = await request.json();
-  const consultation = await consultationService.update(user.id, id, dto);
+
+  const body: unknown = await request.json();
+  const result = editConsultationSchema.safeParse(body);
+
+  if (!result.success) return badResponse(result, "Invalid consultation");
+
+  const consultation = await consultationService.update(
+    user.id,
+    id,
+    result.data,
+  );
 
   return Response.json(consultation);
 }

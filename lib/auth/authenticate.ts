@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "../supabase/server";
 import { CurrentUser } from "./types";
-import { mapJWTToCurrentUser } from "./mapper";
+import { mapJwtToUser } from "./mapper";
 import { ZodSafeParseResult } from "zod";
 
 export async function getAuthenticatedUser(): Promise<CurrentUser | null> {
@@ -10,14 +10,14 @@ export async function getAuthenticatedUser(): Promise<CurrentUser | null> {
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims.sub) return null;
 
-  return mapJWTToCurrentUser(data.claims);
+  return mapJwtToUser(data.claims);
 }
 
-export function unauthorisedReponse() {
+export function unauthorisedResponse() {
   return Response.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-export function forbiddenReponse() {
+export function forbiddenResponse() {
   return Response.json({ error: "Forbidden" }, { status: 403 });
 }
 

@@ -1,22 +1,19 @@
 import {
   badResponse,
-  forbiddenReponse,
+  forbiddenResponse,
   getAuthenticatedUser,
-  unauthorisedReponse,
+  unauthorisedResponse,
 } from "@/lib/auth/authenticate";
 import { isAdmin } from "@/lib/auth/mapper";
-import {
-  CreateConsultationDto,
-  createConsultationSchema,
-} from "@/lib/supabase/consultations/contracts";
+import { createConsultationSchema } from "@/lib/supabase/consultations/contracts";
 import consultationService from "@/lib/supabase/consultations/service";
 
 export async function POST(request: Request) {
   const user = await getAuthenticatedUser();
-  if (!user) return unauthorisedReponse();
-  if (isAdmin(user)) return forbiddenReponse();
+  if (!user) return unauthorisedResponse();
+  if (isAdmin(user)) return forbiddenResponse();
 
-  const body: CreateConsultationDto = await request.json();
+  const body: unknown = await request.json();
   const result = createConsultationSchema.safeParse(body);
 
   if (!result.success) return badResponse(result, "Invalid consultation");
