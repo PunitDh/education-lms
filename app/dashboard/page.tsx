@@ -30,7 +30,9 @@ export default async function DashboardPage() {
 
 const DashboardContent = async () => {
   const userDetails = await fetchUserDetails();
-  const allConsultations = await consultationService.fetchAll();
-  console.log({ allConsultations });
+  const isAdmin = userDetails.app_metadata?.role === "admin";
+  const consultations = isAdmin ? await consultationService.fetchAll() : await consultationService.fetchByUserId(userDetails.sub);
+
+  console.log({ consultations });
   return <Dashboard user={userDetails} />;
 };

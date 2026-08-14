@@ -6,6 +6,7 @@ export type Consultation = {
   consultationAt: string;
   createdAt: string;
   updatedAt: string;
+  userId: string;
 };
 
 export type CreateConsultation = {
@@ -14,3 +15,5 @@ export type CreateConsultation = {
   reason: string;
   consultationAt: string;
 };
+
+export type SearchConsultationUserId = Pick<Consultation, "userId">;

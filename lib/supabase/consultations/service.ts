@@ -6,7 +6,7 @@ const consultationService = {
   },
 
   fetchByUserId: async function (userId: string) {
-    return await consultantRepository.all();
+    return await consultantRepository.where({ userId });
   },
 };
 
