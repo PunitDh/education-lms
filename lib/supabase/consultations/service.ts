@@ -1,34 +1,46 @@
 import "server-only";
 
-import consultantRepository from "./repository";
+import consultationRepository from "./repository";
 import {
   Consultation,
   ConsultationStatus,
   CreateConsultationDto,
   EditConsultationDto,
 } from "./types";
-import { JwtPayload } from "@supabase/supabase-js";
+import { CurrentUser } from "@/lib/auth/types";
+import { isAdmin } from "@/lib/auth/mapper";
+
+const allowedStatusTransitions: Readonly<
+  Record<ConsultationStatus, ConsultationStatus[]>
+> = {
+  [ConsultationStatus.SCHEDULED]: [
+    ConsultationStatus.COMPLETED,
+    ConsultationStatus.CANCELLED,
+  ],
+  [ConsultationStatus.COMPLETED]: [ConsultationStatus.SCHEDULED],
+  [ConsultationStatus.CANCELLED]: [],
+};
 
 const consultationService = {
   fetchAll: async function (): Promise<Consultation[]> {
-    return await consultantRepository.all();
+    return await consultationRepository.all();
   },
 
   fetchByUserId: async function (userId: string): Promise<Consultation[]> {
-    return await consultantRepository.where({ userId });
+    return await consultationRepository.where({ userId });
   },
 
-  fetchForUser: async function (user: JwtPayload): Promise<Consultation[]> {
-    return user.app_metadata?.role === "admin"
+  fetchForUser: async function (user: CurrentUser): Promise<Consultation[]> {
+    return isAdmin(user)
       ? await this.fetchAll()
-      : await this.fetchByUserId(user.sub);
+      : await this.fetchByUserId(user.id);
   },
 
   create: async function (
     userId: string,
     consultation: CreateConsultationDto,
   ): Promise<Consultation> {
-    return await consultantRepository.create(userId, consultation);
+    return await consultationRepository.create(userId, consultation);
   },
 
   update: async function (
@@ -36,7 +48,7 @@ const consultationService = {
     id: string,
     consultation: EditConsultationDto,
   ): Promise<Consultation> {
-    return await consultantRepository.update(userId, id, consultation);
+    return await consultationRepository.update(userId, id, consultation);
   },
 
   changeStatus: async function (
@@ -44,7 +56,14 @@ const consultationService = {
     id: string,
     status: ConsultationStatus,
   ): Promise<Consultation> {
-    return await consultantRepository.changeStatus(userId, id, status);
+    const consultation = await consultationRepository.findById(id);
+
+    if (allowedStatusTransitions[consultation.status].includes(status))
+      return await consultationRepository.changeStatus(userId, id, status);
+
+    throw new Error(
+      `Cannot change consultation from ${consultation.status} to ${status}`,
+    );
   },
 };
 

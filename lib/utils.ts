@@ -1,6 +1,7 @@
 import { JwtPayload } from "@supabase/supabase-js";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { CurrentUser } from "./auth/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,14 +12,9 @@ export const hasEnvVars =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export function getUserDisplayName(user: JwtPayload | undefined): string {
+export function getUserDisplayName(user: CurrentUser | undefined): string {
   if (!user) return "";
-  const { user_metadata: metadata } = user;
-
-  const firstName = metadata?.firstName ?? "";
-  const lastName = metadata?.lastName ?? "";
-  const fullName = `${firstName} ${lastName}`.trim();
-
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
   return fullName || user.email || "";
 }
 
@@ -43,5 +39,3 @@ export function formatDateTimeForPicker(value: string) {
     date.getDate(),
   )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
-
-

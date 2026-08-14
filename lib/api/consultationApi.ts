@@ -5,7 +5,7 @@ import {
   EditConsultationDto,
 } from "../supabase/consultations/types";
 
-type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "QUERY";
+type HttpMethod = "GET" | "POST" | "PATCH";
 
 async function request<T>(
   url: string,

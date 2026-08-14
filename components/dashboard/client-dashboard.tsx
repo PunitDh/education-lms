@@ -16,23 +16,25 @@ import { formatDateTimeForPicker } from "@/lib/utils";
 import ConsultationCard from "./ConsultationCard";
 import CardForm from "./CardForm";
 import { ConsultationForm } from "./types";
+import { CurrentUser } from "@/lib/auth/types";
+import { isAdmin } from "@/lib/auth/mapper";
 
 type DashboardProps = {
   consultations: Consultation[];
-  isAdmin: boolean;
-};
-
-const initialFormState: Readonly<ConsultationForm> = {
-  firstName: "",
-  lastName: "",
-  reason: "",
-  datetime: "",
+  user: CurrentUser;
 };
 
 export default function Dashboard({
   consultations: existing = [],
-  isAdmin,
+  user,
 }: DashboardProps) {
+  const initialFormState: Readonly<ConsultationForm> = {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    reason: "",
+    datetime: "",
+  };
+
   const [consultations, setConsultations] = useState<Consultation[]>(existing);
   const [openForm, setOpenForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,8 +69,9 @@ export default function Dashboard({
         setConsultations((s) =>
           s.map((c) => (c.id === editingId ? { ...c, ...consultation } : c)),
         );
+        toast.success("Consultation saved!");
       } catch (error) {
-        toast.error("Failed to edit consultation.");
+        toast.error("Failed to save edited consultation.");
       }
     } else {
       const newConsultation: CreateConsultationDto = {
@@ -81,6 +84,7 @@ export default function Dashboard({
       try {
         const consultation = await consultationApi.create(newConsultation);
         setConsultations((s) => [consultation, ...s]);
+        toast.success("Consultation created!");
       } catch (error) {
         toast.error("Failed to create consultation.");
       }
@@ -119,41 +123,70 @@ export default function Dashboard({
 
   function handleMarkCompleted(consultation: Consultation) {
     return async function () {
-      const updated = await consultationApi.changeStatus(
-        consultation.id,
-        ConsultationStatus.COMPLETED,
-      );
-      if (updated) updateConsultationState(consultation, updated);
+      try {
+        const updated = await consultationApi.changeStatus(
+          consultation.id,
+          ConsultationStatus.COMPLETED,
+        );
+        if (updated) {
+          updateConsultationState(consultation, updated);
+          toast.success(
+            `Successfully marked consultation as ${ConsultationStatus.COMPLETED}.`,
+          );
+        }
+      } catch (error) {
+        toast.error(
+          `Failed to mark consultation as ${ConsultationStatus.COMPLETED}.`,
+        );
+      }
     };
   }
 
   function handleMarkScheduled(consultation: Consultation) {
     return async function () {
-      const updated = await consultationApi.changeStatus(
-        consultation.id,
-        ConsultationStatus.SCHEDULED,
-      );
-      if (updated) updateConsultationState(consultation, updated);
+      try {
+        const updated = await consultationApi.changeStatus(
+          consultation.id,
+          ConsultationStatus.SCHEDULED,
+        );
+        if (updated) {
+          updateConsultationState(consultation, updated);
+          toast.success(
+            `Successfully marked consultation as ${ConsultationStatus.SCHEDULED}.`,
+          );
+        }
+      } catch (error) {
+        toast.error(
+          `Failed to mark consultation as ${ConsultationStatus.SCHEDULED}.`,
+        );
+      }
     };
   }
 
   async function handleCancelConfirmed() {
-    if (!cancelId) return;
+    try {
+      if (!cancelId) return;
 
-    const consultation = await consultationApi.changeStatus(
-      cancelId,
-      ConsultationStatus.CANCELLED,
-    );
+      const consultation = await consultationApi.changeStatus(
+        cancelId,
+        ConsultationStatus.CANCELLED,
+      );
 
-    if (!consultation) return;
+      if (!consultation) return;
 
-    setConsultations((consultations) =>
-      consultations.map((c) =>
-        c.id === cancelId ? { ...c, ...consultation } : c,
-      ),
-    );
-    setCancelId(null);
-    setEditingId(null);
+      setConsultations((consultations) =>
+        consultations.map((c) =>
+          c.id === cancelId ? { ...c, ...consultation } : c,
+        ),
+      );
+      setCancelId(null);
+      setEditingId(null);
+      toast.success(
+        `Successfully ${ConsultationStatus.CANCELLED} consultation.`,
+      );
+    } catch (error) {
+      toast.error("Failed to cancel consultation.");
+    }
   }
 
   function handleDeleteCancel() {
@@ -166,14 +199,23 @@ export default function Dashboard({
         <p className="text-sm text-muted-foreground">
           Schedule and manage consultations
         </p>
-        <Button
-          aria-expanded={openForm}
-          aria-controls="consultation-form-panel"
-          onClick={() => setOpenForm((v) => !v)}
+        <span
+          title={
+            isAdmin(user)
+              ? "Admins cannot create consultations."
+              : "Book new consultation"
+          }
         >
-          {openForm ? <X size={16} /> : <PlusCircle size={16} />}
-          {openForm ? "Close form" : "Book Consultation"}
-        </Button>
+          <Button
+            aria-expanded={openForm}
+            aria-controls="consultation-form-panel"
+            onClick={() => setOpenForm((v) => !v)}
+            disabled={isAdmin(user)}
+          >
+            {openForm ? <X size={16} /> : <PlusCircle size={16} />}
+            {openForm ? "Close form" : "Book Consultation"}
+          </Button>
+        </span>
       </div>
 
       <CardForm
@@ -197,7 +239,7 @@ export default function Dashboard({
         {consultations.map((c) => (
           <ConsultationCard
             key={c.id}
-            canEdit={!isAdmin}
+            canEdit={!isAdmin(user)}
             consultation={c}
             onEdit={handleEdit(c)}
             onCancel={handleCancel(c)}
@@ -207,7 +249,6 @@ export default function Dashboard({
         ))}
       </div>
 
-      {/* Confirm dialog for cancellations */}
       {cancelId && (
         <ConfirmDialog
           open={Boolean(cancelId)}

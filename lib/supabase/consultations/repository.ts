@@ -35,7 +35,7 @@ function mapConsultationStatus(status: string): ConsultationStatus {
   }
 }
 
-const consultantRepository = {
+const consultationRepository = {
   all: async function (): Promise<Consultation[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -59,6 +59,18 @@ const consultantRepository = {
 
     if (error) throw error;
     return data.map(mapConsultation);
+  },
+
+  findById: async function (id: string): Promise<Consultation> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("consultations")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return mapConsultation(data);
   },
 
   create: async function (
@@ -126,4 +138,4 @@ const consultantRepository = {
   },
 };
 
-export default consultantRepository;
+export default consultationRepository;

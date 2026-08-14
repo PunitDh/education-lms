@@ -9,7 +9,8 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { X } from "lucide-react";
 import { ConsultationForm } from "./types";
-import { ChangeEventHandler, Dispatch, SetStateAction } from "react";
+import { ChangeEventHandler } from "react";
+import { JwtPayload } from "@supabase/supabase-js";
 
 type Props = {
   open: boolean;

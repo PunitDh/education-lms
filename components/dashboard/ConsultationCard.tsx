@@ -15,7 +15,7 @@ type Props = {
   onMarkScheduled: (consultation: Consultation) => void;
 };
 
-const statusStyleMap: Record<ConsultationStatus, string> = {
+const statusStyleMap: Readonly<Record<ConsultationStatus, string>> = {
   [ConsultationStatus.SCHEDULED]:
     "bg-blue-100 text-blue-800 border border-blue-300",
   [ConsultationStatus.COMPLETED]:
@@ -36,9 +36,11 @@ const ConsultationCard = ({
     statusStyleMap[consultation.status] ??
     "bg-gray-100 text-gray-800 border border-gray-300";
 
-  const showEdit = canEdit && consultation.status !== ConsultationStatus.COMPLETED;
+  const showEdit =
+    canEdit && consultation.status !== ConsultationStatus.COMPLETED;
   const showComplete = consultation.status === ConsultationStatus.SCHEDULED;
-  const showSchedule = consultation.status !== ConsultationStatus.SCHEDULED &&
+  const showSchedule =
+    consultation.status !== ConsultationStatus.SCHEDULED &&
     consultation.status !== ConsultationStatus.CANCELLED;
 
   return (
@@ -61,7 +63,7 @@ const ConsultationCard = ({
           {formatDateTimeDisplay(consultation.consultationAt)}
         </div>
       </div>
-      {canEdit && (
+      {canEdit ? (
         <div className="flex items-center gap-2">
           {showEdit && (
             <span
@@ -105,15 +107,22 @@ const ConsultationCard = ({
           )}
 
           {showSchedule && (
-              <Button
-                onClick={() => onMarkScheduled(consultation)}
-                variant="outline"
-                size="sm"
-                title="Mark as scheduled"
-              >
-                <Clock size={16} /> Mark Scheduled
-              </Button>
-            )}
+            <Button
+              onClick={() => onMarkScheduled(consultation)}
+              variant="outline"
+              size="sm"
+              title="Mark as scheduled"
+            >
+              <Clock size={16} /> Mark Scheduled
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="text-sm text-gray-500 flex flex-col items-end">
+          <span>
+            Created by: {consultation.firstName} {consultation.lastName}
+          </span>
+          <span>{formatDateTimeDisplay(consultation.createdAt)}</span>
         </div>
       )}
     </div>
