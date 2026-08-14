@@ -3,6 +3,7 @@ import "server-only";
 import consultantRepository from "./repository";
 import {
   Consultation,
+  ConsultationStatus,
   CreateConsultationDto,
   EditConsultationDto,
 } from "./types";
@@ -38,8 +39,12 @@ const consultationService = {
     return await consultantRepository.update(userId, id, consultation);
   },
 
-  cancel: async function (userId: string, id: string): Promise<Consultation> {
-    return await consultantRepository.cancel(userId, id);
+  changeStatus: async function (
+    userId: string,
+    id: string,
+    status: ConsultationStatus,
+  ): Promise<Consultation> {
+    return await consultantRepository.changeStatus(userId, id, status);
   },
 };
 

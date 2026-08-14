@@ -1,5 +1,6 @@
 import {
   Consultation,
+  ConsultationStatus,
   CreateConsultationDto,
   EditConsultationDto,
 } from "../supabase/consultations/types";
@@ -25,13 +26,13 @@ async function request<T>(
 function useConsultationApi() {
   return {
     all: async function (): Promise<Consultation[]> {
-      return request<Consultation[]>("/api/consultations", "GET");
+      return await request<Consultation[]>("/api/consultations", "GET");
     },
 
     create: async function (
       consultation: CreateConsultationDto,
     ): Promise<Consultation> {
-      return request("/api/consultations", "POST", {
+      return await request("/api/consultations", "POST", {
         body: JSON.stringify(consultation),
       });
     },
@@ -40,13 +41,20 @@ function useConsultationApi() {
       id: string,
       consultation: EditConsultationDto,
     ): Promise<Consultation> {
-      return request(`/api/consultations/${id}`, "PATCH", {
+      return await request(`/api/consultations/${id}`, "PATCH", {
         body: JSON.stringify(consultation),
       });
     },
 
-    cancel: async function (id: string, consultation: EditConsultationDto): Promise<Consultation> {
-      return request(`/api/consultations/${id}/cancel`, "PATCH");
+    changeStatus: async function (
+      id: string,
+      status: ConsultationStatus,
+    ): Promise<Consultation> {
+      return await request(`/api/consultations/${id}/change-status`, "PATCH", {
+        body: JSON.stringify({
+          status,
+        }),
+      });
     },
   };
 }

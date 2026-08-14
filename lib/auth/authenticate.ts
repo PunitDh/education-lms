@@ -14,3 +14,7 @@ export async function getAuthenticatedUser(): Promise<JwtPayload | null> {
 export function unauthorisedReponse() {
   return Response.json({ error: "Unauthorized" }, { status: 401 });
 }
+
+export function isAdmin(user: JwtPayload): boolean {
+  return user.app_metadata?.role === "admin";
+}

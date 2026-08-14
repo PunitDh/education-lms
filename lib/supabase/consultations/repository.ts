@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "../server";
 import {
   Consultation,
+  ConsultationStatus,
   CreateConsultationDto,
   EditConsultationDto,
   SearchConsultationUserId,
@@ -17,7 +18,21 @@ function mapConsultation(row: any): Consultation {
     consultationAt: new Date(row.consultation_at).toISOString(),
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
+    status: mapConsultationStatus(row.status),
   };
+}
+
+function mapConsultationStatus(status: string): ConsultationStatus {
+  switch (String(status).trim().toLowerCase()) {
+    case "scheduled":
+      return ConsultationStatus.SCHEDULED;
+    case "completed":
+      return ConsultationStatus.COMPLETED;
+    case "cancelled":
+      return ConsultationStatus.CANCELLED;
+    default:
+      throw new Error(`Unknown consultation status: ${status}`) as never;
+  }
 }
 
 const consultantRepository = {
@@ -39,7 +54,7 @@ const consultantRepository = {
     const { data, error } = await supabase
       .from("consultations")
       .select("*")
-      .eq("userId", userId)
+      .eq("user_id", userId)
       .order("consultation_at", { ascending: false });
 
     if (error) throw error;
@@ -90,12 +105,24 @@ const consultantRepository = {
     return mapConsultation(data);
   },
 
-  cancel: async function (userId: string, id: string): Promise<Consultation> {
+  changeStatus: async function (
+    userId: string,
+    id: string,
+    status: ConsultationStatus,
+  ): Promise<Consultation> {
     const supabase = await createClient();
-    const { data, error } = await supabase.from("consultations").update({});
+    const { data, error } = await supabase
+      .from("consultations")
+      .update({
+        status,
+      })
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select()
+      .single();
 
     if (error) throw error;
-    return {} as Consultation;
+    return mapConsultation(data);
   },
 };
 

@@ -1,58 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { PlusCircle, Edit2, Trash2, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { PlusCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import {
   Consultation,
+  ConsultationStatus,
   CreateConsultationDto,
   EditConsultationDto,
 } from "@/lib/supabase/consultations/types";
 import useConsultationApi from "@/lib/api/consultationApi";
-import { formatDateTimeDisplay, formatDateTimeForPicker } from "@/lib/utils";
+import { formatDateTimeForPicker } from "@/lib/utils";
 import ConsultationCard from "./ConsultationCard";
 import CardForm from "./CardForm";
 import { ConsultationForm } from "./types";
 
 type DashboardProps = {
   consultations: Consultation[];
+  isAdmin: boolean;
+};
+
+const initialFormState: Readonly<ConsultationForm> = {
+  firstName: "",
+  lastName: "",
+  reason: "",
+  datetime: "",
 };
 
 export default function Dashboard({
-  consultations: _consultations = [],
+  consultations: existing = [],
+  isAdmin,
 }: DashboardProps) {
-  const [consultations, setConsultations] =
-    useState<Consultation[]>(_consultations);
+  const [consultations, setConsultations] = useState<Consultation[]>(existing);
   const [openForm, setOpenForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  const [form, setForm] = useState<ConsultationForm>({
-    firstName: "",
-    lastName: "",
-    reason: "",
-    datetime: "",
-  });
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState<ConsultationForm>(initialFormState);
+  const [cancelId, setCancelId] = useState<string | null>(null);
   const consultationApi = useConsultationApi();
 
   function resetForm() {
-    setForm({ firstName: "", lastName: "", reason: "", datetime: "" });
+    setForm(initialFormState);
     setEditingId(null);
-  }
-
-  const handleReset = () => {
-    resetForm();
     setOpenForm(false);
-  };
+  }
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
@@ -67,14 +59,17 @@ export default function Dashboard({
         consultationAt: datetime,
       };
 
-      const consultation = await consultationApi.update(
-        editingId,
-        editingConsultation,
-      );
-
-      setConsultations((s) =>
-        s.map((c) => (c.id === editingId ? { ...c, ...consultation } : c)),
-      );
+      try {
+        const consultation = await consultationApi.update(
+          editingId,
+          editingConsultation,
+        );
+        setConsultations((s) =>
+          s.map((c) => (c.id === editingId ? { ...c, ...consultation } : c)),
+        );
+      } catch (error) {
+        toast.error("Failed to edit consultation.");
+      }
     } else {
       const newConsultation: CreateConsultationDto = {
         firstName,
@@ -83,12 +78,15 @@ export default function Dashboard({
         consultationAt: datetime,
       };
 
-      const consultation = await consultationApi.create(newConsultation);
-      setConsultations((s) => [consultation, ...s]);
+      try {
+        const consultation = await consultationApi.create(newConsultation);
+        setConsultations((s) => [consultation, ...s]);
+      } catch (error) {
+        toast.error("Failed to create consultation.");
+      }
     }
 
     resetForm();
-    setOpenForm(false);
   }
 
   function handleEdit(c: Consultation) {
@@ -104,20 +102,62 @@ export default function Dashboard({
     };
   }
 
-  function handleDelete(id: string) {
+  function handleCancel(consultation: Consultation) {
     return function () {
-      setDeleteId(id);
+      setCancelId(consultation.id);
     };
   }
 
-  function handleDeleteConfirmed() {
-    if (!deleteId) return;
-    setConsultations((s) => s.filter((c) => c.id !== deleteId));
-    setDeleteId(null);
+  function updateConsultationState(
+    consultation: Consultation,
+    updated: Consultation,
+  ) {
+    setConsultations((s) =>
+      s.map((c) => (c.id === consultation.id ? { ...c, ...updated } : c)),
+    );
+  }
+
+  function handleMarkCompleted(consultation: Consultation) {
+    return async function () {
+      const updated = await consultationApi.changeStatus(
+        consultation.id,
+        ConsultationStatus.COMPLETED,
+      );
+      if (updated) updateConsultationState(consultation, updated);
+    };
+  }
+
+  function handleMarkScheduled(consultation: Consultation) {
+    return async function () {
+      const updated = await consultationApi.changeStatus(
+        consultation.id,
+        ConsultationStatus.SCHEDULED,
+      );
+      if (updated) updateConsultationState(consultation, updated);
+    };
+  }
+
+  async function handleCancelConfirmed() {
+    if (!cancelId) return;
+
+    const consultation = await consultationApi.changeStatus(
+      cancelId,
+      ConsultationStatus.CANCELLED,
+    );
+
+    if (!consultation) return;
+
+    setConsultations((consultations) =>
+      consultations.map((c) =>
+        c.id === cancelId ? { ...c, ...consultation } : c,
+      ),
+    );
+    setCancelId(null);
+    setEditingId(null);
   }
 
   function handleDeleteCancel() {
-    setDeleteId(null);
+    setCancelId(null);
   }
 
   return (
@@ -140,7 +180,7 @@ export default function Dashboard({
         open={openForm}
         editingId={editingId}
         onSubmit={handleSubmit}
-        onReset={handleReset}
+        onReset={resetForm}
         form={form}
         onFormChange={(e) =>
           setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -157,21 +197,24 @@ export default function Dashboard({
         {consultations.map((c) => (
           <ConsultationCard
             key={c.id}
+            canEdit={!isAdmin}
             consultation={c}
             onEdit={handleEdit(c)}
-            onDelete={handleDelete(c.id)}
+            onCancel={handleCancel(c)}
+            onMarkCompleted={handleMarkCompleted(c)}
+            onMarkScheduled={handleMarkScheduled(c)}
           />
         ))}
       </div>
 
-      {/* Confirm dialog for deletions */}
-      {deleteId && (
+      {/* Confirm dialog for cancellations */}
+      {cancelId && (
         <ConfirmDialog
-          open={Boolean(deleteId)}
-          title="Delete consultation"
-          description="This action cannot be undone. Are you sure you want to delete this consultation?"
+          open={Boolean(cancelId)}
+          title="Cancel consultation"
+          description="Are you sure you want to cancel this consultation? This cannot be undone."
           onCancel={handleDeleteCancel}
-          onConfirm={handleDeleteConfirmed}
+          onConfirm={handleCancelConfirmed}
         />
       )}
     </div>

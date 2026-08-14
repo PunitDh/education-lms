@@ -40,7 +40,7 @@ export default function ConfirmDialog({
               Cancel
             </Button>
             <Button variant="destructive" onClick={onConfirm}>
-              Delete
+              Confirm
             </Button>
           </div>
         </div>

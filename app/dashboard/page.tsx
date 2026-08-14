@@ -3,14 +3,15 @@ import { redirect } from "next/navigation";
 import Dashboard from "@/components/dashboard/client-dashboard";
 import { Suspense } from "react";
 import consultationService from "@/lib/supabase/consultations/service";
-import { getAuthenticatedUser } from "@/lib/auth/authenticate";
+import { getAuthenticatedUser, isAdmin } from "@/lib/auth/authenticate";
+import Spinner from "@/components/ui/spinner";
 
 export default async function DashboardPage() {
   return (
-    <div className="flex-1 w-full flex flex-col gap-12">
+    <div className="flex-1 w-11/12 flex flex-col gap-12">
       <div>
         <h2 className="font-bold text-2xl mb-4">Dashboard</h2>
-        <Suspense fallback={<div>Loading Dashboard...</div>}>
+        <Suspense fallback={<Spinner />}>
           <DashboardContent />
         </Suspense>
       </div>
@@ -24,5 +25,5 @@ const DashboardContent = async () => {
 
   const consultations = await consultationService.fetchForUser(user);
 
-  return <Dashboard consultations={consultations} />;
+  return <Dashboard consultations={consultations} isAdmin={isAdmin(user)} />;
 };
