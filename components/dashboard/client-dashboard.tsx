@@ -19,16 +19,12 @@ import {
 } from "@/lib/supabase/consultations/types";
 import useConsultationApi from "@/lib/api/consultationApi";
 import { formatDateTimeDisplay, formatDateTimeForPicker } from "@/lib/utils";
+import ConsultationCard from "./ConsultationCard";
+import CardForm from "./CardForm";
+import { ConsultationForm } from "./types";
 
 type DashboardProps = {
   consultations: Consultation[];
-};
-
-type ConsultationForm = {
-  firstName: string;
-  lastName: string;
-  reason: string;
-  datetime: string;
 };
 
 export default function Dashboard({
@@ -52,6 +48,11 @@ export default function Dashboard({
     setForm({ firstName: "", lastName: "", reason: "", datetime: "" });
     setEditingId(null);
   }
+
+  const handleReset = () => {
+    resetForm();
+    setOpenForm(false);
+  };
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
@@ -91,18 +92,22 @@ export default function Dashboard({
   }
 
   function handleEdit(c: Consultation) {
-    setForm({
-      firstName: c.firstName ?? "",
-      lastName: c.lastName ?? "",
-      reason: c.reason ?? "",
-      datetime: formatDateTimeForPicker(c.consultationAt ?? ""),
-    });
-    setEditingId(c.id);
-    setOpenForm(true);
+    return function () {
+      setForm({
+        firstName: c.firstName ?? "",
+        lastName: c.lastName ?? "",
+        reason: c.reason ?? "",
+        datetime: formatDateTimeForPicker(c.consultationAt ?? ""),
+      });
+      setEditingId(c.id);
+      setOpenForm(true);
+    };
   }
 
   function handleDelete(id: string) {
-    setDeleteId(id);
+    return function () {
+      setDeleteId(id);
+    };
   }
 
   function handleDeleteConfirmed() {
@@ -131,86 +136,16 @@ export default function Dashboard({
         </Button>
       </div>
 
-      <div
-        id="consultation-form-panel"
-        className={`grid transition-all duration-300 ease-out ${
-          openForm ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <Card className="w-full md:w-2/3">
-            <CardHeader>
-              <div className="flex justify-between items-center w-full">
-                <CardTitle>{editingId ? "Edit" : "New"} Consultation</CardTitle>
-                <div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      resetForm();
-                      setOpenForm(false);
-                    }}
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-              </div>
-              <CardDescription />
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={(e) => handleSubmit(e)}
-                className="grid grid-cols-1 md:grid-cols-2 gap-3"
-              >
-                <Input
-                  placeholder="First name"
-                  value={form.firstName}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, firstName: e.target.value }))
-                  }
-                />
-                <Input
-                  placeholder="Last name"
-                  value={form.lastName}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, lastName: e.target.value }))
-                  }
-                />
-                <Input
-                  placeholder="Reason"
-                  className="md:col-span-2"
-                  value={form.reason}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, reason: e.target.value }))
-                  }
-                />
-                <Input
-                  type="datetime-local"
-                  className="md:col-span-2"
-                  step={1800}
-                  value={form.datetime}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, datetime: e.target.value }))
-                  }
-                />
-
-                <div className="md:col-span-2 flex gap-2 justify-end">
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => {
-                      resetForm();
-                      setOpenForm(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">{editingId ? "Save" : "Create"}</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <CardForm
+        open={openForm}
+        editingId={editingId}
+        onSubmit={handleSubmit}
+        onReset={handleReset}
+        form={form}
+        onFormChange={(e) =>
+          setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+        }
+      />
 
       <div className="grid gap-3">
         {(!consultations || consultations.length === 0) && (
@@ -220,34 +155,12 @@ export default function Dashboard({
         )}
 
         {consultations.map((c) => (
-          <div
+          <ConsultationCard
             key={c.id}
-            className="p-4 rounded-md border flex items-center justify-between gap-4"
-          >
-            <div>
-              <div className="font-semibold">
-                {c.firstName} {c.lastName}
-              </div>
-              <div className="text-sm text-muted-foreground">{c.reason}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {formatDateTimeDisplay(c.consultationAt)}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleEdit(c)}
-                className="p-2 rounded hover:bg-muted"
-              >
-                <Edit2 size={16} />
-              </button>
-              <button
-                onClick={() => handleDelete(c.id)}
-                className="p-2 rounded hover:bg-muted text-red-600"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
+            consultation={c}
+            onEdit={handleEdit(c)}
+            onDelete={handleDelete(c.id)}
+          />
         ))}
       </div>
 
