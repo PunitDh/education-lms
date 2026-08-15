@@ -11,42 +11,39 @@ FOR SELECT TO authenticated
 USING (
   (SELECT auth.uid()) = user_id
   OR
-  COALESCE(
-    (SELECT auth.jwt() -> 'app_metadata' ->> 'role'),
-    'student'
-  ) = 'admin'
+  (SELECT auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
 );
 
 -- Students may create consultations only for themselves.
 -- Admins are read-only.
 CREATE POLICY "consultations_insert" ON public.consultations
 FOR INSERT TO authenticated
-USING (
+WITH CHECK (
   (SELECT auth.uid()) = user_id
   AND
   COALESCE(
     (SELECT auth.jwt() -> 'app_metadata' ->> 'role'),
-    'student'
-  ) = 'student'
+    ''
+  ) <> 'admin'
 );
 
 -- Students may update their own consultations.
 -- Admins are read-only.
-CREATE POLICY "consultations_update" ON public.Consultations
+CREATE POLICY "consultations_update" ON public.consultations
 FOR UPDATE TO authenticated
 USING (
   (SELECT auth.uid()) = user_id
   AND
   COALESCE(
     (SELECT auth.jwt() -> 'app_metadata' ->> 'role'),
-    'student'
-  ) = 'student'
+    ''
+  ) <> 'admin'
 )
 WITH CHECK (
   (SELECT auth.uid()) = user_id
   AND
   COALESCE(
     (SELECT auth.jwt() -> 'app_metadata' ->> 'role'),
-    'student'
-  ) = student
+    ''
+  ) <> 'admin'
 );

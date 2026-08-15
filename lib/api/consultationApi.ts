@@ -22,7 +22,7 @@ async function request<T>(
     ...options,
   });
   if (!response.ok) {
-    const body = await response.json();
+    const body = await response.json().catch(() => null);
     throw new Error(body.error ?? `Request failed: (${response.status})`);
   }
   return response.json();
