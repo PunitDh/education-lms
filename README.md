@@ -199,3 +199,15 @@ The unit tests cover consultation validation and lifecycle rules, authentication
 - Names stored on a consultation are a snapshot of the booking details and are not kept in sync with Auth metadata.
 - Anyone without an explicit `admin` application role is treated as a student.
 - Pagination is outside the scope of this assessment. The current query structure can be extended with pagination without changing the route, service, and repository boundaries.
+
+## Trade-offs and Production Considerations
+
+This implementation favours explicit route, service, and repository boundaries over introducing an ORM or client-side server-state library for a single resource. Those abstractions may become useful as the number of entities, screens, and cache interactions grows.
+
+Given more time, the next priorities would be:
+
+- Add pagination to consultation queries.
+- Define structured domain errors and consistently map them to API status codes and response bodies.
+- Add database integration tests for migrations, RLS policies, and the `updated_at` trigger.
+- Add rate limiting, structured logging, and production monitoring around authentication and mutation endpoints.
+- Introduce runtime response schemas or generated API types if the API grows beyond this application.
