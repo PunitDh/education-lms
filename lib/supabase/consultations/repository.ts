@@ -66,17 +66,18 @@ const consultationRepository = {
   findByIdForUser: async function (
     userId: string,
     id: string,
-  ): Promise<Consultation> {
+  ): Promise<Consultation | null> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .select("*")
       .eq("user_id", userId)
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return mapConsultation(data);
+
+    return data ? mapConsultation(data) : null;
   },
 
   create: async function (
@@ -104,7 +105,7 @@ const consultationRepository = {
     userId: string,
     id: string,
     consultation: EditConsultationDto,
-  ): Promise<Consultation> {
+  ): Promise<Consultation | null> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
@@ -117,17 +118,17 @@ const consultationRepository = {
       .eq("id", id)
       .eq("user_id", userId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return mapConsultation(data);
+    return data ? mapConsultation(data) : null;
   },
 
   changeStatus: async function (
     userId: string,
     id: string,
     status: ConsultationStatus,
-  ): Promise<Consultation> {
+  ): Promise<Consultation | null> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
@@ -137,10 +138,10 @@ const consultationRepository = {
       .eq("id", id)
       .eq("user_id", userId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return mapConsultation(data);
+    return data ? mapConsultation(data) : null;
   },
 };
 

@@ -6,6 +6,8 @@ import { ZodSafeParseResult } from "zod";
 
 export class ConsultationConflictError extends Error {}
 
+export class ConsultationNotFoundError extends Error {}
+
 export async function getAuthenticatedUser(): Promise<CurrentUser | null> {
   const supabase = await createClient();
 
@@ -32,4 +34,8 @@ export function badResponse<T>(result: ZodSafeParseResult<T>, error: string) {
 
 export function conflictResponse(error: ConsultationConflictError) {
   return Response.json({ error: error.message }, { status: 409 });
+}
+
+export function notFoundResponse(error: ConsultationNotFoundError) {
+  return Response.json({ error: error.message }, { status: 404 });
 }

@@ -4,8 +4,10 @@ import {
   badResponse,
   conflictResponse,
   ConsultationConflictError,
+  ConsultationNotFoundError,
   forbiddenResponse,
   getAuthenticatedUser,
+  notFoundResponse,
   unauthorisedResponse,
 } from "@/lib/auth/authenticate";
 import { isAdmin } from "@/lib/auth/mapper";
@@ -32,6 +34,8 @@ export async function PATCH(request: Request, { params }: HttpContext) {
 
     return Response.json(consultation);
   } catch (error) {
+    if (error instanceof ConsultationNotFoundError)
+      return notFoundResponse(error);
     if (error instanceof ConsultationConflictError)
       return conflictResponse(error);
     throw error;
