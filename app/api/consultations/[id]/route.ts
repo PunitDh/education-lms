@@ -1,17 +1,19 @@
 import consultationService from "@/lib/supabase/consultations/service";
 import { HttpContext } from "../../types";
+import { getAuthenticatedUser } from "@/lib/auth/authenticate";
+import { isAdmin } from "@/lib/auth/mapper";
+import { editConsultationSchema } from "@/lib/supabase/consultations/contracts";
 import {
   badResponse,
   conflictResponse,
-  ConsultationConflictError,
-  ConsultationNotFoundError,
   forbiddenResponse,
-  getAuthenticatedUser,
   notFoundResponse,
   unauthorisedResponse,
-} from "@/lib/auth/authenticate";
-import { isAdmin } from "@/lib/auth/mapper";
-import { editConsultationSchema } from "@/lib/supabase/consultations/contracts";
+} from "@/lib/api/response";
+import {
+  ConsultationConflictError,
+  ConsultationNotFoundError,
+} from "@/lib/supabase/consultations/errors";
 
 export async function PATCH(request: Request, { params }: HttpContext) {
   const user = await getAuthenticatedUser();

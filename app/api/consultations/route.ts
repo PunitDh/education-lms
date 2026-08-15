@@ -1,9 +1,9 @@
 import {
   badResponse,
   forbiddenResponse,
-  getAuthenticatedUser,
   unauthorisedResponse,
-} from "@/lib/auth/authenticate";
+} from "@/lib/api/response";
+import { getAuthenticatedUser } from "@/lib/auth/authenticate";
 import { isAdmin } from "@/lib/auth/mapper";
 import { createConsultationSchema } from "@/lib/supabase/consultations/contracts";
 import consultationService from "@/lib/supabase/consultations/service";

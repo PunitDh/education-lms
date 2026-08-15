@@ -5,10 +5,7 @@ import { Consultation, ConsultationStatus } from "./types";
 import { CurrentUser } from "@/lib/auth/types";
 import { isAdmin } from "@/lib/auth/mapper";
 import { CreateConsultationDto, EditConsultationDto } from "./contracts";
-import {
-  ConsultationConflictError,
-  ConsultationNotFoundError,
-} from "@/lib/auth/authenticate";
+import { ConsultationConflictError, ConsultationNotFoundError } from "./errors";
 
 const allowedStatusTransitions: Readonly<
   Record<ConsultationStatus, ConsultationStatus[]>
