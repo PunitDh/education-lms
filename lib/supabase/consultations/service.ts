@@ -5,6 +5,7 @@ import { Consultation, ConsultationStatus } from "./types";
 import { CurrentUser } from "@/lib/auth/types";
 import { isAdmin } from "@/lib/auth/mapper";
 import { CreateConsultationDto, EditConsultationDto } from "./contracts";
+import { ConsultationConflictError } from "@/lib/auth/authenticate";
 
 const allowedStatusTransitions: Readonly<
   Record<ConsultationStatus, ConsultationStatus[]>
@@ -47,7 +48,9 @@ const consultationService = {
     const existing = await consultationRepository.findByIdForUser(userId, id);
 
     if (existing.status !== ConsultationStatus.SCHEDULED)
-      throw new Error(`Cannot edit a ${existing.status} consultation`);
+      throw new ConsultationConflictError(
+        `Cannot edit a ${existing.status} consultation`,
+      );
 
     return await consultationRepository.update(userId, id, consultation);
   },
@@ -62,7 +65,7 @@ const consultationService = {
     if (allowedStatusTransitions[existing.status].includes(status))
       return await consultationRepository.changeStatus(userId, id, status);
 
-    throw new Error(
+    throw new ConsultationConflictError(
       `Cannot change consultation from ${existing.status} to ${status}`,
     );
   },

@@ -4,6 +4,8 @@ import { CurrentUser } from "./types";
 import { mapJwtToUser } from "./mapper";
 import { ZodSafeParseResult } from "zod";
 
+export class ConsultationConflictError extends Error {}
+
 export async function getAuthenticatedUser(): Promise<CurrentUser | null> {
   const supabase = await createClient();
 
@@ -26,4 +28,8 @@ export function badResponse<T>(result: ZodSafeParseResult<T>, error: string) {
     { error, issues: result.error?.issues },
     { status: 400 },
   );
+}
+
+export function conflictResponse(error: ConsultationConflictError) {
+  return Response.json({ error: error.message }, { status: 409 });
 }

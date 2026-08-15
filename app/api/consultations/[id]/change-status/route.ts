@@ -1,6 +1,8 @@
 import consultationService from "@/lib/supabase/consultations/service";
 import {
   badResponse,
+  conflictResponse,
+  ConsultationConflictError,
   forbiddenResponse,
   getAuthenticatedUser,
   unauthorisedResponse,
@@ -20,11 +22,17 @@ export async function PATCH(request: Request, { params }: HttpContext) {
 
   if (!result.success) return badResponse(result, "Invalid status");
 
-  const consultation = await consultationService.changeStatus(
-    user.id,
-    id,
-    result.data.status,
-  );
+  try {
+    const consultation = await consultationService.changeStatus(
+      user.id,
+      id,
+      result.data.status,
+    );
 
-  return Response.json(consultation);
+    return Response.json(consultation);
+  } catch (error) {
+    if (error instanceof ConsultationConflictError)
+      return conflictResponse(error);
+    throw error;
+  }
 }
