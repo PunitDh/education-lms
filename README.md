@@ -224,9 +224,17 @@ The publishable Supabase API key. This key is intentionally available to browser
 
 `SUPABASE_SECRET_KEY`
 
-A privileged server-side Supabase key used by the development seed scripts to create authentication users and seed application data.
+A privileged server-side Supabase key used by the consultation
+repository and development seed scripts.
 
-This key must never be exposed through a `NEXT_PUBLIC_` environment variable or committed to source control.
+Consultation data is intentionally not exposed directly to browser
+clients. Database privileges for the `anon` and `authenticated`
+PostgreSQL roles are revoked, and application data access is performed
+through the server-only repository layer.
+
+The secret key must never be exposed through a `NEXT_PUBLIC_`
+environment variable, committed to source control, or used by browser
+code.
 
 ## Create the Database
 
@@ -350,6 +358,21 @@ This provides an explicit HTTP API boundary and keeps request handling separate 
 Consultation ownership is never supplied by the browser.
 
 The authenticated user's UUID is resolved from Supabase Auth on the server and supplied to the consultation service and repository.
+
+### Database access security
+
+Consultation data is not queried directly from browser Supabase clients.
+
+The `anon` and `authenticated` roles have their table privileges revoked.
+All consultation reads and writes pass through the Next.js server,
+service and repository layers.
+
+The repository uses a server-only Supabase secret key. Authentication
+continues to use the normal publishable-key Supabase SSR client.
+
+This keeps authentication, authorization, API validation and business
+rules within the application boundary while preventing clients from
+bypassing the API and accessing the consultations table directly.
 
 ### Read-only administrators
 

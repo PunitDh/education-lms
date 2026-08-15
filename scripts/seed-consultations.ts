@@ -31,7 +31,7 @@ async function seed() {
   const admin = users.find((user) => user.email === "admin@example.com");
 
   if (!student || !admin)
-    throw new Error("Seed users not found. Run `npm run seed:users` first.");
+    throw new Error("Seed users not found. Run `npm run db:seed:users` first.");
 
   // Make the script safe to run multiple times.
   const { error: deleteError } = await supabase

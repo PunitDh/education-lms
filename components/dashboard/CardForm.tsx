@@ -10,16 +10,13 @@ import { Input } from "../ui/input";
 import { X } from "lucide-react";
 import { ConsultationForm } from "./types";
 import { ChangeEventHandler } from "react";
+import { formatDateTimeForPicker } from "@/lib/utils";
 
 const getMinDateTime = () => {
-  const now = new Date();
-  const minutes = now.getMinutes();
-  const remainder = minutes % 30;
+  const interval = 30 * 60 * 1000;
+  const rounded = new Date(Math.ceil(Date.now() / interval) * interval);
 
-  if (remainder !== 0) now.setMinutes(minutes + (30 - remainder));
-
-  now.setSeconds(0, 0);
-  return now.toISOString().slice(0, 16);
+  return formatDateTimeForPicker(rounded.toString());
 };
 
 type Props = {
@@ -68,12 +65,16 @@ const CardForm = ({
               placeholder="First name"
               value={form.firstName}
               onChange={onFormChange}
+              required
+              maxLength={100}
             />
             <Input
               name="lastName"
               placeholder="Last name"
               value={form.lastName}
               onChange={onFormChange}
+              required
+              maxLength={100}
             />
             <Input
               name="reason"
@@ -81,6 +82,8 @@ const CardForm = ({
               className="md:col-span-2"
               value={form.reason}
               onChange={onFormChange}
+              required
+              maxLength={200}
             />
             <Input
               name="datetime"
@@ -90,6 +93,7 @@ const CardForm = ({
               min={getMinDateTime()}
               value={form.datetime}
               onChange={onFormChange}
+              required
             />
 
             <div className="md:col-span-2 flex gap-2 justify-end">

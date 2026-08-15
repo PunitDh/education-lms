@@ -20,6 +20,7 @@ import {
   CreateConsultationDto,
   EditConsultationDto,
 } from "@/lib/supabase/consultations/contracts";
+import { createErrorToast } from "../error-toast";
 
 type DashboardProps = {
   consultations: Consultation[];
@@ -43,6 +44,13 @@ export default function Dashboard({
   const [form, setForm] = useState<ConsultationForm>(initialFormState);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const consultationApi = useConsultationApi();
+
+  function handleFormToggle() {
+    if (openForm) return resetForm();
+    setForm(initialFormState);
+    setEditingId(null);
+    setOpenForm(true);
+  }
 
   function resetForm() {
     setForm(initialFormState);
@@ -72,8 +80,9 @@ export default function Dashboard({
           s.map((c) => (c.id === editingId ? { ...c, ...consultation } : c)),
         );
         toast.success("Consultation saved!");
+        resetForm();
       } catch (error) {
-        toast.error("Failed to save edited consultation.");
+        createErrorToast(error, "Failed to save edited consultation");
       }
     } else {
       const newConsultation: CreateConsultationDto = {
@@ -87,12 +96,11 @@ export default function Dashboard({
         const consultation = await consultationApi.create(newConsultation);
         setConsultations((s) => [consultation, ...s]);
         toast.success("Consultation created!");
+        resetForm();
       } catch (error) {
-        toast.error("Failed to create consultation.");
+        createErrorToast(error, "Failed to create consultation");
       }
     }
-
-    resetForm();
   }
 
   function handleEdit(c: Consultation) {
@@ -133,12 +141,13 @@ export default function Dashboard({
         if (updated) {
           updateConsultationState(consultation, updated);
           toast.success(
-            `Successfully marked consultation as ${ConsultationStatus.COMPLETED}.`,
+            `Successfully marked consultation as '${ConsultationStatus.COMPLETED}'.`,
           );
         }
       } catch (error) {
-        toast.error(
-          `Failed to mark consultation as ${ConsultationStatus.COMPLETED}.`,
+        createErrorToast(
+          error,
+          `Failed to mark consultation as '${ConsultationStatus.COMPLETED}'`,
         );
       }
     };
@@ -154,12 +163,13 @@ export default function Dashboard({
         if (updated) {
           updateConsultationState(consultation, updated);
           toast.success(
-            `Successfully marked consultation as ${ConsultationStatus.SCHEDULED}.`,
+            `Successfully marked consultation as '${ConsultationStatus.SCHEDULED}'.`,
           );
         }
       } catch (error) {
-        toast.error(
-          `Failed to mark consultation as ${ConsultationStatus.SCHEDULED}.`,
+        createErrorToast(
+          error,
+          `Failed to mark consultation as '${ConsultationStatus.SCHEDULED}'`,
         );
       }
     };
@@ -187,7 +197,7 @@ export default function Dashboard({
         `Successfully ${ConsultationStatus.CANCELLED} consultation.`,
       );
     } catch (error) {
-      toast.error("Failed to cancel consultation.");
+      createErrorToast(error, "Failed to cancel consultation");
     }
   }
 
@@ -211,7 +221,7 @@ export default function Dashboard({
           <Button
             aria-expanded={openForm}
             aria-controls="consultation-form-panel"
-            onClick={() => setOpenForm((v) => !v)}
+            onClick={handleFormToggle}
             disabled={isAdmin(user)}
           >
             {openForm ? <X size={16} /> : <PlusCircle size={16} />}

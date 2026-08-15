@@ -1,4 +1,7 @@
-import { CreateConsultationDto, EditConsultationDto } from "../supabase/consultations/contracts";
+import {
+  CreateConsultationDto,
+  EditConsultationDto,
+} from "../supabase/consultations/contracts";
 import {
   Consultation,
   ConsultationStatus,
@@ -18,7 +21,10 @@ async function request<T>(
     },
     ...options,
   });
-  if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+  if (!response.ok) {
+    const body = await response.json();
+    throw new Error(body.error ?? `Request failed: (${response.status})`);
+  }
   return response.json();
 }
 

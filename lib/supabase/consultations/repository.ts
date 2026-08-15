@@ -6,7 +6,7 @@ import {
 } from "./types";
 import { Database } from "../database.types";
 import { CreateConsultationDto, EditConsultationDto } from "./contracts";
-import { createDataClient } from "../data";
+import { createClient } from "../server";
 
 function mapConsultation(
   row: Database["public"]["Tables"]["consultations"]["Row"],
@@ -39,7 +39,7 @@ function mapConsultationStatus(status: string): ConsultationStatus {
 
 const consultationRepository = {
   all: async function (): Promise<Consultation[]> {
-    const supabase = createDataClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .select("*")
@@ -52,7 +52,7 @@ const consultationRepository = {
   where: async function ({
     userId,
   }: SearchConsultationUserId): Promise<Consultation[]> {
-    const supabase = createDataClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .select("*")
@@ -67,7 +67,7 @@ const consultationRepository = {
     userId: string,
     id: string,
   ): Promise<Consultation> {
-    const supabase = createDataClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .select("*")
@@ -83,7 +83,7 @@ const consultationRepository = {
     userId: string,
     consultation: CreateConsultationDto,
   ): Promise<Consultation> {
-    const supabase = createDataClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .insert({
@@ -105,7 +105,7 @@ const consultationRepository = {
     id: string,
     consultation: EditConsultationDto,
   ): Promise<Consultation> {
-    const supabase = createDataClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .update({
@@ -128,7 +128,7 @@ const consultationRepository = {
     id: string,
     status: ConsultationStatus,
   ): Promise<Consultation> {
-    const supabase = createDataClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("consultations")
       .update({
