@@ -59,7 +59,52 @@ The main responsibilities are separated as follows:
 
 The authenticated user's ID is resolved from their verified Supabase JWT. Consultation ownership cannot be selected by the client. Application roles are read from `app_metadata`, which is not editable by users; anyone without the `admin` role is treated as a student.
 
-Database changes are managed through `supabase/migrations`. The consultations table uses a PostgreSQL enum for status, an index for user consultation queries, and a trigger to maintain `updated_at`.
+## Database
+
+Database changes are defined in `supabase/migrations` and can be reproduced with `npx supabase db reset`.
+
+The main table is `public.consultations`:
+
+| Column            | Type                  | Purpose                                     |
+| ----------------- | --------------------- | ------------------------------------------- |
+| `id`              | `uuid`                | Primary key                                 |
+| `user_id`         | `uuid`                | References the booking user in `auth.users` |
+| `first_name`      | `text`                | First name captured when booking            |
+| `last_name`       | `text`                | Last name captured when booking             |
+| `reason`          | `text`                | Reason for the consultation                 |
+| `consultation_at` | `timestamptz`         | Scheduled date and time                     |
+| `status`          | `consultation_status` | `scheduled`, `completed`, or `cancelled`    |
+| `created_at`      | `timestamptz`         | Creation timestamp                          |
+| `updated_at`      | `timestamptz`         | Last modification timestamp                 |
+
+The migrations also:
+
+- Add a trigger that maintains `updated_at`
+- Add an index on `user_id` and `consultation_at` for dashboard queries
+- Configure database privileges and enable RLS
+- Add policies for student ownership and read-only administrator access
+
+### Row-Level Security
+
+The `consultations` table uses PostgreSQL Row-Level Security as a
+defence-in-depth authorization layer.
+
+RLS policies enforce that:
+
+- Students can read only their own consultations.
+- Students can create consultations only for themselves.
+- Students can update only their own consultations.
+- Administrators can read all consultations.
+- Administrators cannot create or update consultations.
+- Authenticated application users cannot delete consultations.
+
+Application-level authorization and consultation lifecycle rules are
+still enforced by the Next.js API and service layer. RLS provides an
+additional database-level boundary so that ownership and role restrictions
+cannot be bypassed through direct Supabase access.
+
+Administrator status is stored in Supabase Auth `app_metadata`. Users
+without the `admin` role are treated as students.
 
 ## Local Setup
 
@@ -95,7 +140,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local publishable key>
 SUPABASE_SECRET_KEY=<local secret key>
 ```
 
-`SUPABASE_SECRET_KEY` is used only by server-side repository operations and development seed scripts. It must not be exposed to browser code or committed to source control.
+`SUPABASE_SECRET_KEY` is used only by the development seed scripts for privileged local setup operations. Normal application database access uses the authenticated user's Supabase session so that PostgreSQL Row-Level Security policies are enforced.
 
 Create and seed the local database:
 
@@ -146,3 +191,11 @@ The unit tests cover consultation validation and lifecycle rules, authentication
 - **Server-controlled ownership:** Mutation requests never accept a consultation owner; the user ID always comes from the authenticated session.
 - **Read-only administrators:** The assessment requires administrators to view all consultations, so they do not receive mutation permissions.
 - **Status changes instead of deletion:** Cancelled consultations remain available as historical records.
+
+## Assumptions
+
+- Cancellation is final. A student must create a new consultation after cancelling one.
+- Completed consultations are historical records and must be marked incomplete before they can be rescheduled.
+- Names stored on a consultation are a snapshot of the booking details and are not kept in sync with Auth metadata.
+- Anyone without an explicit `admin` application role is treated as a student.
+- Pagination is outside the scope of this assessment. The current query structure can be extended with pagination without changing the route, service, and repository boundaries.
